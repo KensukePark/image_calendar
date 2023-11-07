@@ -38,6 +38,7 @@ dependencies:
   shared_preferences:
   image_picker:
   table_calendar:
+  carousel_slider:
 
 dev_dependencies:
   flutter_test:
