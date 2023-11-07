@@ -7,9 +7,6 @@ import 'package:image_calendar/screen/loading_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:intl/intl.dart';
-
-String vals="Null";
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.list, required this.final_events, required this.focus_day}) : super(key: key);
@@ -56,6 +53,26 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
+
+  void _showAlert(String title) {
+    showCupertinoDialog(context: context, builder: (context) {
+      return CupertinoAlertDialog(
+        title: Text(title),
+        actions: [
+          Column(
+            children: [
+              CupertinoDialogAction(isDefaultAction: true, child: Text("다운로드"), onPressed: () {
+                Navigator.pop(context);
+              }),
+              CupertinoDialogAction(isDefaultAction: true, child: Text("삭제"), onPressed: () {
+                Navigator.pop(context);
+              })
+            ],
+          )
+        ],
+      );
+    });
+  }
   @override
   Widget build(BuildContext context) {
     final actionSheet = CupertinoActionSheet(
@@ -64,16 +81,12 @@ class _HomePageState extends State<HomePage> {
             child: Text(
               "カメラで撮影",
               style: TextStyle(
-                color: Colors.black,
+                color: Colors.blueAccent,
                 fontWeight: FontWeight.w200
               ),
             ),
             isDefaultAction: true,
             onPressed: (){
-              print("Action 1 Selected");
-              setState(() {
-                vals="Action 1";
-              });
               Navigator.of(context).pop(true);
             },
           ),
@@ -81,16 +94,12 @@ class _HomePageState extends State<HomePage> {
             child: Text(
               "ギャラリーから選択",
               style: TextStyle(
-                color: Colors.black,
+                color: Colors.blueAccent,
                 fontWeight: FontWeight.w200
               ),
             ),
             isDefaultAction: true,
             onPressed: (){
-              print("Action 2 Selected");
-              setState(() {
-                vals="Action 2";
-              });
               Navigator.of(context).pop(false);
             },
           )
@@ -99,15 +108,53 @@ class _HomePageState extends State<HomePage> {
           child: Text(
             "キャンセル",
             style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w200
+              color: Colors.blue,
+              fontWeight: FontWeight.bold
             ),
           ),
           onPressed: (){
-            print(" cencel was childed");
-            setState(() {
-              vals="Cencel";
-            });
+            Navigator.pop(context);
+          },
+        )
+    );
+    final clickPopup = CupertinoActionSheet(
+        actions: <Widget>[
+          CupertinoActionSheetAction(
+            child: Text(
+              "写真をダウンロード,",
+              style: TextStyle(
+                  color: Colors.blueAccent,
+                  fontWeight: FontWeight.w500
+              ),
+            ),
+            isDefaultAction: true,
+            onPressed: (){
+              Navigator.of(context).pop(true);
+            },
+          ),
+          CupertinoActionSheetAction(
+            child: Text(
+              "写真を削除",
+              style: TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w500
+              ),
+            ),
+            isDefaultAction: true,
+            onPressed: (){
+              Navigator.of(context).pop(false);
+            },
+          )
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          child: Text(
+            "キャンセル",
+            style: TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold
+            ),
+          ),
+          onPressed: (){
             Navigator.pop(context);
           },
         )
@@ -123,7 +170,6 @@ class _HomePageState extends State<HomePage> {
           var prefs = await SharedPreferences.getInstance();
           try {
             String? decode_event = prefs.getString('events');
-
             Map<String, dynamic> temp_events = json.decode(decode_event!);
             String utc_year = year.toString();
             String utc_month = month.toString();
@@ -161,163 +207,172 @@ class _HomePageState extends State<HomePage> {
         },
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Container(
-            child: Column(
-              children: [
-                TableCalendar(
-                  locale: "ja_JP",
-                  firstDay: DateTime.utc(1900, 1, 1),
-                  lastDay: DateTime.utc(2099, 12, 31),
-                  focusedDay: focusedDay,
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                  ),
-                  eventLoader: _getEventsForDay,
-                  onDaySelected: (DateTime selectedDay, DateTime focusedDay) {
-                    setState((){
-                      this.selectedDay = selectedDay;
-                      this.focusedDay = focusedDay;
-                      print(selectedDay);
-                      year = int.parse(selectedDay.toString().substring(0,4));
-                      month = int.parse(selectedDay.toString().substring(5,7));
-                      day = int.parse(selectedDay.toString().substring(8,10));
-                      if ( _getEventsForDay(DateTime.utc(year, month, day)).length == 0) {
-                        exist_check = false;
-                        img_list = [];
-                      }
-                      else {
-                        img_list = [];
-                        exist_check = true;
-                        print(widget.final_events[DateTime.utc(year, month, day)][0]);
-                        print(DateTime.utc(year, month, day));
-                        print(widget.final_events[DateTime.utc(year, month, day)].length);
-                        for (int i=0; i<widget.final_events[DateTime.utc(year, month, day)].length; i++) {
-                          img_list.add(Image.memory(base64Decode(widget.final_events[DateTime.utc(year, month, day)][i])));
-                        }
-                      }
-                    });
-                  },
-                  selectedDayPredicate: (DateTime day) {
-                    return isSameDay(selectedDay, day);
-                  },
-                  calendarStyle: CalendarStyle(
-                    outsideDaysVisible : false,
-                    isTodayHighlighted : false,
-                    rangeStartDecoration: BoxDecoration(
-                      color : const Color(0xFFF48FB1),
-                      shape: BoxShape.circle,
-                    ),
-                    rangeEndDecoration: BoxDecoration(
-                      color: const Color(0xFFF48FB1),
-                      shape: BoxShape.circle,
-                    ),
-                    rangeHighlightColor: const Color(0xFFF48FB1),
-                    todayDecoration: BoxDecoration(
-                      color: Colors.blueAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    selectedDecoration : const BoxDecoration(
-                      color: const Color.fromRGBO(163, 122, 68, 109),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+        child: Column(
+          children: [
+            TableCalendar(
+              locale: "ja_JP",
+              firstDay: DateTime.utc(1900, 1, 1),
+              lastDay: DateTime.utc(2099, 12, 31),
+              focusedDay: focusedDay,
+              headerStyle: HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+              ),
+              eventLoader: _getEventsForDay,
+              onDaySelected: (DateTime selectedDay, DateTime focusedDay) {
+                setState((){
+                  this.selectedDay = selectedDay;
+                  this.focusedDay = focusedDay;
+                  print(selectedDay);
+                  year = int.parse(selectedDay.toString().substring(0,4));
+                  month = int.parse(selectedDay.toString().substring(5,7));
+                  day = int.parse(selectedDay.toString().substring(8,10));
+                  if ( _getEventsForDay(DateTime.utc(year, month, day)).length == 0) {
+                    exist_check = false;
+                    img_list = [];
+                  }
+                  else {
+                    img_list = [];
+                    exist_check = true;
+                    print(widget.final_events[DateTime.utc(year, month, day)][0]);
+                    print(DateTime.utc(year, month, day));
+                    print(widget.final_events[DateTime.utc(year, month, day)].length);
+                    for (int i=0; i<widget.final_events[DateTime.utc(year, month, day)].length; i++) {
+                      img_list.add(Image.memory(base64Decode(widget.final_events[DateTime.utc(year, month, day)][i])));
+                    }
+                  }
+                });
+              },
+              selectedDayPredicate: (DateTime day) {
+                return isSameDay(selectedDay, day);
+              },
+              calendarStyle: CalendarStyle(
+                outsideDaysVisible : false,
+                isTodayHighlighted : false,
+                rangeStartDecoration: BoxDecoration(
+                  color : const Color(0xFFF48FB1),
+                  shape: BoxShape.circle,
                 ),
-                widget.list == 'empty' ? Container() : Container(
-                  child: Center(
-                    child: Image.memory(
-                      base64Decode(widget.list),
-                      width: MediaQuery.of(context).size.width * 0.9,
-                      height: MediaQuery.of(context).size.height * 0.9,
-                    ),
-                  ),
+                rangeEndDecoration: BoxDecoration(
+                  color: const Color(0xFFF48FB1),
+                  shape: BoxShape.circle,
                 ),
-                Container(
-                  child: Container(
-                    padding: EdgeInsets.all(20),
-                    width: MediaQuery.of(context).size.width - 20,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.transparent,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 24,
-                          child: Center(
-                            child: Text(
-                              selectedDay.toString().substring(0,4) + '年' + selectedDay.toString().substring(5,7) + '月' + selectedDay.toString().substring(8,10) + '日',
-                              style: TextStyle(
-                                fontSize: 20,
-                              ),
+                rangeHighlightColor: const Color(0xFFF48FB1),
+                todayDecoration: BoxDecoration(
+                  color: Colors.blueAccent,
+                  shape: BoxShape.circle,
+                ),
+                selectedDecoration : const BoxDecoration(
+                  color: const Color.fromRGBO(163, 122, 68, 109),
+                  shape: BoxShape.circle,
+                ),
+                holidayTextStyle: TextStyle(
+                  color: Colors.redAccent
+                ),
+                weekendTextStyle: TextStyle(
+                    color: Colors.redAccent
+                ),
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.transparent,
+              ),
+              child: Text(
+                selectedDay.toString().substring(0,4) + '年' + selectedDay.toString().substring(5,7) + '月' + selectedDay.toString().substring(8,10) + '日',
+                style: TextStyle(
+                  fontSize: 20,
+                ),
+              ),
+            ),
+            exist_check == true ?
+            Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    CarouselSlider.builder(
+                      itemCount: widget.final_events[DateTime.utc(year, month, day)].length,
+                      itemBuilder: (BuildContext context, int itemIndex, int pageViewIndex) =>
+                          InkWell(
+                            onTap: () async {
+                              // _showAlert(DateTime.utc(year, month, day).toString().substring(0,10) + '날의 ${itemIndex+1}번째 사진');
+                              bool? check = await showCupertinoModalPopup(context: context, builder: (context)=>clickPopup);
+                              if (check == null) return;
+                              else if (check == true) {
+                                print('download');
+                              }
+                              else {
+                                var prefs = await SharedPreferences.getInstance();
+                                print('delete');
+                                String? decode_event = prefs.getString('events');
+                                Map<String, dynamic> temp_events = json.decode(decode_event!);
+                                String utc_year = year.toString();
+                                String utc_month = month.toString();
+                                utc_month.length == 1 ? utc_month = '0' + utc_month : utc_month = month.toString();
+                                String utc_day = day.toString();
+                                utc_day.length == 1 ? utc_day = '0' + utc_day : utc_day = day.toString();
+                                String utc_temp = utc_year+utc_month+utc_day;
+                                var temp_list = temp_events[utc_temp];
+                                temp_list.removeAt(itemIndex);
+                                temp_events[utc_temp] = temp_list;
+                                String encode_event = json.encode(temp_events);
+                                prefs.setString('events', encode_event);
+                                prefs.setString('focus_day', focusedDay.toString().substring(0,10));
+                                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context){
+                                  return LoadingPage();
+                                }), (route) => false);
+                              }
+                            },
+                            child: Image.memory(
+                              base64Decode(widget.final_events[DateTime.utc(year, month, day)][itemIndex]),
                             ),
                           ),
-                        ),
-                        SizedBox(height: 15,),
-                        exist_check == true ? 
-                            Container(
-                              child: Column(
-                                children: [
-                                  CarouselSlider.builder(
-                                    itemCount: widget.final_events[DateTime.utc(year, month, day)].length,
-                                    itemBuilder: (BuildContext context, int itemIndex, int pageViewIndex) =>
-                                        Container(
-                                          child: Image.memory(
-                                            base64Decode(widget.final_events[DateTime.utc(year, month, day)][itemIndex]),
-                                          ),
-                                        ),
-                                    options: CarouselOptions(
-                                      height: 400,
-                                      aspectRatio: 16/9,
-                                      viewportFraction: 0.8,
-                                      initialPage: 0,
-                                      enableInfiniteScroll: false,
-                                      reverse: false,
-                                      autoPlay: false,
-                                      enlargeCenterPage: true,
-                                      enlargeFactor: 0.3,
-                                      scrollDirection: Axis.horizontal,
-                                      onPageChanged: (index, reason) {
-                                        setState(() {
-                                          _current = index;
-                                        });
-                                      }),
-                                    ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: img_list.asMap().entries.map((entry) {
-                                      return GestureDetector(
-                                        onTap: () => _controller.animateToPage(entry.key),
-                                        child: Container(
-                                          width: 12.0,
-                                          height: 12.0,
-                                          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                                          decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: (Theme.of(context).brightness == Brightness.dark
-                                                  ? Colors.white
-                                                  : Colors.black)
-                                                  .withOpacity(_current == entry.key ? 0.9 : 0.4)),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ],
-                              )
-                              // Image.memory(
-                              //   base64Decode(widget.final_events[DateTime.utc(year, month, day)][0]),
-                              // ),
-                            ) : Container(),
-                        SizedBox(height: 35,),
-                      ],
+                      options: CarouselOptions(
+                          height: MediaQuery.of(context).size.height*0.4,
+                          aspectRatio: 16/9,
+                          viewportFraction: 0.8,
+                          initialPage: 0,
+                          enableInfiniteScroll: false,
+                          reverse: false,
+                          autoPlay: false,
+                          enlargeCenterPage: true,
+                          enlargeFactor: 0.3,
+                          scrollDirection: Axis.horizontal,
+                          onPageChanged: (index, reason) {
+                            setState(() {
+                              _current = index;
+                            });
+                          }),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                    SizedBox(height: 10,),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: img_list.asMap().entries.map((entry) {
+                        return GestureDetector(
+                          onTap: () => _controller.animateToPage(entry.key),
+                          child: Container(
+                            width: 12.0,
+                            height: 12.0,
+                            margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: (Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black)
+                                    .withOpacity(_current == entry.key ? 0.9 : 0.4)),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                )
+              // Image.memory(
+              //   base64Decode(widget.final_events[DateTime.utc(year, month, day)][0]),
+              // ),
+            ) : Container(),
+          ],
         ),
       ),
     );
