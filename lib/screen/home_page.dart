@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_calendar/screen/loading_page.dart';
@@ -11,21 +12,25 @@ import 'package:intl/intl.dart';
 String vals="Null";
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key, required this.list, required this.final_events}) : super(key: key);
+  const HomePage({Key? key, required this.list, required this.final_events, required this.focus_day}) : super(key: key);
   final String list;
   final final_events;
+  final focus_day;
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  int _current = 0;
+  final CarouselController _controller = CarouselController();
   Map<DateTime, List<dynamic>> events = {};
   DateTime selectedDay = DateTime.now();
   DateTime focusedDay = DateTime.now();
   List<dynamic> _getEventsForDay(DateTime day) {
     return events[day] ?? [];
   }
+  List<Widget> img_list = [];
   bool exist_check = false;
   int year = 2023;
   int month = 11;
@@ -34,6 +39,11 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    int temp_year = int.parse(widget.focus_day.substring(0,4));
+    int temp_month = int.parse(widget.focus_day.substring(5,7));
+    int temp_day = int.parse(widget.focus_day.substring(8));
+    focusedDay = DateTime.utc(temp_year, temp_month, temp_day);
+    selectedDay = DateTime.utc(temp_year, temp_month, temp_day);
     print(widget.final_events);
     year = int.parse(selectedDay.toString().substring(0,4));
     month = int.parse(selectedDay.toString().substring(5,7));
@@ -41,6 +51,9 @@ class _HomePageState extends State<HomePage> {
     events = widget.final_events;
     if ( _getEventsForDay(DateTime.utc(year, month, day)).length != 0) {
       exist_check = true;
+      for (int i=0; i<widget.final_events[DateTime.utc(year, month, day)].length; i++) {
+        img_list.add(Image.memory(base64Decode(widget.final_events[DateTime.utc(year, month, day)][i])));
+      }
     }
   }
   @override
@@ -101,6 +114,7 @@ class _HomePageState extends State<HomePage> {
     );
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
         onPressed: () async {
           bool? isCamera = await showCupertinoModalPopup(context: context, builder: (context)=>actionSheet);
           if (isCamera == null) return;
@@ -136,6 +150,7 @@ class _HomePageState extends State<HomePage> {
                 String encode_event = json.encode(temp_events);
                 prefs.setString('events', encode_event);
               }
+              prefs.setString('focus_day', focusedDay.toString().substring(0,10));
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context){
                 return LoadingPage();
               }), (route) => false);
@@ -170,11 +185,17 @@ class _HomePageState extends State<HomePage> {
                       day = int.parse(selectedDay.toString().substring(8,10));
                       if ( _getEventsForDay(DateTime.utc(year, month, day)).length == 0) {
                         exist_check = false;
+                        img_list = [];
                       }
                       else {
+                        img_list = [];
                         exist_check = true;
                         print(widget.final_events[DateTime.utc(year, month, day)][0]);
                         print(DateTime.utc(year, month, day));
+                        print(widget.final_events[DateTime.utc(year, month, day)].length);
+                        for (int i=0; i<widget.final_events[DateTime.utc(year, month, day)].length; i++) {
+                          img_list.add(Image.memory(base64Decode(widget.final_events[DateTime.utc(year, month, day)][i])));
+                        }
                       }
                     });
                   },
@@ -237,12 +258,59 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(height: 15,),
                         exist_check == true ? 
                             Container(
-                              child: Image.memory(
-                                base64Decode(widget.final_events[DateTime.utc(year, month, day)][0]),
-                              ),
+                              child: Column(
+                                children: [
+                                  CarouselSlider.builder(
+                                    itemCount: widget.final_events[DateTime.utc(year, month, day)].length,
+                                    itemBuilder: (BuildContext context, int itemIndex, int pageViewIndex) =>
+                                        Container(
+                                          child: Image.memory(
+                                            base64Decode(widget.final_events[DateTime.utc(year, month, day)][itemIndex]),
+                                          ),
+                                        ),
+                                    options: CarouselOptions(
+                                      height: 400,
+                                      aspectRatio: 16/9,
+                                      viewportFraction: 0.8,
+                                      initialPage: 0,
+                                      enableInfiniteScroll: false,
+                                      reverse: false,
+                                      autoPlay: false,
+                                      enlargeCenterPage: true,
+                                      enlargeFactor: 0.3,
+                                      scrollDirection: Axis.horizontal,
+                                      onPageChanged: (index, reason) {
+                                        setState(() {
+                                          _current = index;
+                                        });
+                                      }),
+                                    ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: img_list.asMap().entries.map((entry) {
+                                      return GestureDetector(
+                                        onTap: () => _controller.animateToPage(entry.key),
+                                        child: Container(
+                                          width: 12.0,
+                                          height: 12.0,
+                                          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                                          decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: (Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black)
+                                                  .withOpacity(_current == entry.key ? 0.9 : 0.4)),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              )
+                              // Image.memory(
+                              //   base64Decode(widget.final_events[DateTime.utc(year, month, day)][0]),
+                              // ),
                             ) : Container(),
-
-
+                        SizedBox(height: 35,),
                       ],
                     ),
                   ),
