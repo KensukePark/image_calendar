@@ -6,6 +6,7 @@ import 'package:image_calendar/screen/loading_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 
 String vals="Null";
 
@@ -96,7 +97,14 @@ class _HomePageState extends State<HomePage> {
               });
               Uint8List? imageRaw = await _image?.readAsBytes();
               if (imageRaw != null) {
-                prefs.setString('img', base64Encode(imageRaw));
+                List<String>? temp = prefs.getStringList(DateFormat('yyyyMMdd').format(focusedDay));
+                if (temp == null) {
+                  prefs.setStringList(DateFormat('yyyyMMdd').format(focusedDay), [base64Encode(imageRaw)]);
+                }
+                else {
+                  temp.add(base64Encode(imageRaw));
+                  prefs.setStringList(DateFormat('yyyyMMdd').format(focusedDay), temp);
+                }
               }
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context){
                 return LoadingPage();
@@ -126,6 +134,7 @@ class _HomePageState extends State<HomePage> {
                     setState((){
                       this.selectedDay = selectedDay;
                       this.focusedDay = focusedDay;
+                      print(selectedDay);
                     });
                   },
                   selectedDayPredicate: (DateTime day) {
