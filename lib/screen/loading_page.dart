@@ -27,29 +27,7 @@ class _LoadingPageState extends State<LoadingPage> {
     }
     String? decode_event = prefs.getString('events');
     load_events = json.decode(decode_event!);
-    var temp_list = load_events.values.toList();
-    for (int i=0; i<temp_list.length; i++) {
-      if (statics_list.length == 0) {
-        statics_list.add([temp_list[i][3].toInt(), 1,
-          (temp_list[i][0]*650+temp_list[i][1]*160+temp_list[i][2]*1100).toInt()]);
-      }
-      else {
-        bool check_add = false;
-        for (int j=0; j<statics_list.length; j++) {
-          if (statics_list[j][0] == temp_list[i][3].toInt()) {
-            statics_list[j][1]++;
-            statics_list[j][2]+= (temp_list[i][0]*650+temp_list[i][1]*160+temp_list[i][2]*1100).toInt();
-            check_add = true;
-            break;
-          }
-        }
-        if (check_add == false) {
-          statics_list.add([temp_list[i][3].toInt(), 1,
-            (temp_list[i][0]*650+temp_list[i][1]*160+temp_list[i][2]*1100).toInt()]);
-        }
-        print(statics_list);
-      }
-    }
+    print(load_events);
     var key_list = load_events.keys.toList();
     Map<DateTime, List<dynamic>> final_events = {};
     for (int i=0; i<key_list.length; i++) {
@@ -58,17 +36,9 @@ class _LoadingPageState extends State<LoadingPage> {
       int temp_day = int.parse(key_list[i].substring(6));
       final_events[DateTime.utc(temp_year, temp_month, temp_day)] = load_events[key_list[i]];
     }
-    String? img = prefs.getString('img');
-    if (img != null) {
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context){
-        return HomePage(list: img);
-      }), (route) => false);
-    }
-    else {
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context){
-        return HomePage(list: 'empty');
-      }), (route) => false);
-    }
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context){
+      return HomePage(list: 'empty', final_events: final_events,);
+    }), (route) => false);
   }
   @override
   void initState() {
@@ -88,6 +58,7 @@ class _LoadingPageState extends State<LoadingPage> {
         //         Colors.black.withOpacity(0.3), BlendMode.dstATop),
         //   ),
         // ),
+        child: Center(child: Text('로딩 페이지'),),
       ),
     );
   }
