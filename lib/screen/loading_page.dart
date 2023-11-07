@@ -36,8 +36,9 @@ class _LoadingPageState extends State<LoadingPage> {
       int temp_day = int.parse(key_list[i].substring(6));
       final_events[DateTime.utc(temp_year, temp_month, temp_day)] = load_events[key_list[i]];
     }
+    var focus_day = prefs.getString('focus_day');
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context){
-      return HomePage(list: 'empty', final_events: final_events,);
+      return HomePage(list: 'empty', final_events: final_events, focus_day: focus_day);
     }), (route) => false);
   }
   @override
