@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../screen/home_page.dart';
 
@@ -10,6 +11,26 @@ class LoadingPage extends StatefulWidget {
 }
 
 class _LoadingPageState extends State<LoadingPage> {
+  Future<void> getPermission() async {
+    var status = await Permission.storage.status;
+    if (status.isGranted) {
+      print('ok');
+      return Future.value(true);
+    } else {
+      print('denied');
+      Permission.storage.request();
+      return Future.value(false);
+    }
+  }
+  Future<bool>getStorage() async {
+    Map<Permission, PermissionStatus> stats = await [Permission.manageExternalStorage, Permission.location].request();
+    if (stats[Permission.manageExternalStorage]!.isGranted) return Future.value(true);
+    else {
+      //openAppSettings();
+      return Future.value(false);
+    }
+  }
+
   List<List<num>> statics_list = [];
   Map<String, dynamic> load_events = {};
   void check_data() async {
@@ -27,7 +48,7 @@ class _LoadingPageState extends State<LoadingPage> {
     }
     String? decode_event = prefs.getString('events');
     load_events = json.decode(decode_event!);
-    print(load_events);
+    //print(load_events);
     var key_list = load_events.keys.toList();
     Map<DateTime, List<dynamic>> final_events = {};
     for (int i=0; i<key_list.length; i++) {
@@ -45,6 +66,8 @@ class _LoadingPageState extends State<LoadingPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    getStorage();
+    getPermission();
     check_data();
   }
   @override
