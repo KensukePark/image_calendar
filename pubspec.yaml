@@ -39,6 +39,11 @@ dependencies:
   image_picker:
   table_calendar:
   carousel_slider:
+  dio:
+  image_gallery_saver:
+  permission_handler:
+  path_provider:
+  cr_file_saver:
 
 dev_dependencies:
   flutter_test:
