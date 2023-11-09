@@ -1,12 +1,19 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:typed_data';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cr_file_saver/file_saver.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_calendar/screen/loading_page.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'dart:io';
+import 'dart:typed_data';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.list, required this.final_events, required this.focus_day}) : super(key: key);
@@ -41,7 +48,7 @@ class _HomePageState extends State<HomePage> {
     int temp_day = int.parse(widget.focus_day.substring(8));
     focusedDay = DateTime.utc(temp_year, temp_month, temp_day);
     selectedDay = DateTime.utc(temp_year, temp_month, temp_day);
-    print(widget.final_events);
+    //print(widget.final_events);
     year = int.parse(selectedDay.toString().substring(0,4));
     month = int.parse(selectedDay.toString().substring(5,7));
     day = int.parse(selectedDay.toString().substring(8,10));
@@ -121,7 +128,7 @@ class _HomePageState extends State<HomePage> {
         actions: <Widget>[
           CupertinoActionSheetAction(
             child: Text(
-              "写真をダウンロード,",
+              "写真をダウンロード",
               style: TextStyle(
                   color: Colors.blueAccent,
                   fontWeight: FontWeight.w500
@@ -302,6 +309,46 @@ class _HomePageState extends State<HomePage> {
                               if (check == null) return;
                               else if (check == true) {
                                 print('download');
+                                var uint = base64Decode(widget.final_events[DateTime.utc(year, month, day)][itemIndex]);
+                                Directory appDocDirectory = await getApplicationDocumentsDirectory();
+                                //File(appDocDirectory.path+'my_image.jpg').writeAsBytes(base64Decode(widget.final_events[DateTime.utc(year, month, day)][itemIndex]));
+                                final tempdir = await getTemporaryDirectory();
+                                //File file = await File('${tempdir.path}/image.png').create();
+                                //File('my_image.jpg').writeAsBytes(uint);
+                                // final result = await ImageGallerySaver.saveImage(
+                                //     Uint8List.fromList(uint),
+                                //     quality: 100,
+                                //     name: "${DateTime.now()}"
+                                // );
+                                final downdir = await getExternalStorageDirectory();
+                                final _directory = await getDownloadsDirectory();
+
+                                //안드로이드 SDK 30 미만용 코드
+                                /*
+                                File(appDocDirectory.path + '/' + '${DateTime.now()}.jpg').writeAsBytes(uint);
+                                print('try save');
+                                File('/storage/emulated/0/Download/' + '${DateTime.now()}.jpg').writeAsBytes(uint);
+                                print('save complete');
+
+                                 */
+
+                                //최신 SDK 전용 코드
+                                var temp_name = appDocDirectory.path + '/' + '${DateTime.now()}.jpg';
+                                File(temp_name).writeAsBytes(uint).then((value) async { //App폴더에 사진을 임시 저장후
+                                  print(value);
+                                  print('start');
+                                  final file = await CRFileSaver.saveFileWithDialog(
+                                    SaveFileDialogParams(
+                                        sourceFilePath: temp_name, //App폴더에 저장한 임시 사진을 Source로 이용
+                                        destinationFileName: '${DateTime.now()}.jpg'
+                                    ),
+                                  ).then((value2) {
+                                    print(value2);
+                                    File(temp_name).delete();
+                                    //App폴더안에 임시 저장한 사진 삭제
+                                  });
+                                  print('end process');
+                                });
                               }
                               else {
                                 var prefs = await SharedPreferences.getInstance();
@@ -330,7 +377,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                       options: CarouselOptions(
-                          height: MediaQuery.of(context).size.height*0.4,
+                          height: MediaQuery.of(context).size.height*0.35,
                           aspectRatio: 16/9,
                           viewportFraction: 0.8,
                           initialPage: 0,
