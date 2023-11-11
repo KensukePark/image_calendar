@@ -253,7 +253,6 @@ class _HomePageState extends State<HomePage> {
                 return isSameDay(selectedDay, day);
               },
               calendarStyle: CalendarStyle(
-                outsideDaysVisible : false,
                 isTodayHighlighted : false,
                 rangeStartDecoration: BoxDecoration(
                   color : const Color(0xFFF48FB1),
@@ -271,6 +270,7 @@ class _HomePageState extends State<HomePage> {
                 selectedDecoration : const BoxDecoration(
                   color: const Color.fromRGBO(163, 122, 68, 109),
                   shape: BoxShape.circle,
+
                 ),
                 holidayTextStyle: TextStyle(
                   color: Colors.redAccent
@@ -278,6 +278,7 @@ class _HomePageState extends State<HomePage> {
                 weekendTextStyle: TextStyle(
                     color: Colors.redAccent
                 ),
+                markersMaxCount: 1,
               ),
             ),
             Container(
