@@ -270,7 +270,6 @@ class _HomePageState extends State<HomePage> {
                 selectedDecoration : const BoxDecoration(
                   color: const Color.fromRGBO(163, 122, 68, 109),
                   shape: BoxShape.circle,
-
                 ),
                 holidayTextStyle: TextStyle(
                   color: Colors.redAccent
@@ -324,15 +323,17 @@ class _HomePageState extends State<HomePage> {
                                 final _directory = await getDownloadsDirectory();
 
                                 //안드로이드 SDK 30 미만용 코드
+                                //사진을 쓰기 권한을 이용하여 Download 폴더에 저장
                                 /*
                                 File(appDocDirectory.path + '/' + '${DateTime.now()}.jpg').writeAsBytes(uint);
                                 print('try save');
                                 File('/storage/emulated/0/Download/' + '${DateTime.now()}.jpg').writeAsBytes(uint);
                                 print('save complete');
-
                                  */
 
                                 //최신 SDK 전용 코드
+                                //쓰기 권한을 얻을 수 없으므로 App 내부 폴더에 임시로 사진을 저장후
+                                //이를 복사하는 방식으로 사진을 저장함. 저장후 임시 사진은 삭제
                                 var temp_name = appDocDirectory.path + '/' + '${DateTime.now()}.jpg';
                                 File(temp_name).writeAsBytes(uint).then((value) async { //App폴더에 사진을 임시 저장후
                                   print(value);
