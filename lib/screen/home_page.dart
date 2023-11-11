@@ -36,9 +36,9 @@ class _HomePageState extends State<HomePage> {
   }
   List<Widget> img_list = [];
   bool exist_check = false;
-  int year = 2023;
-  int month = 11;
-  int day = 7;
+  int year = 1999; //초기값
+  int month = 12; //초기값
+  int day = 31; //초기값
   @override
   void initState() {
     // TODO: implement initState
@@ -60,7 +60,6 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
-
   void _showAlert(String title) {
     showCupertinoDialog(context: context, builder: (context) {
       return CupertinoAlertDialog(
